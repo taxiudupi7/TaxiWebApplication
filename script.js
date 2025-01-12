@@ -53,6 +53,8 @@ function showBookingConfirmation(formData) {
             <p><strong>Email:</strong> ${formData.email}</p>
             <p><strong>Package:</strong> ${formData.package}</p>
             <p><strong>Travel Date:</strong> ${formData.travelDate}</p>
+            <p><strong>Pickup Location:</strong> ${formData.pickupLocation}</p>
+            <p><strong>Pickup Time:</strong> ${formData.pickupTime}</p>
             <p><strong>Additional Requirements:</strong> ${formData.message}</p>
         </div>
     `;
@@ -80,6 +82,8 @@ function sendMail() {
     const email = document.getElementById('email').value;
     const packageSelected = document.getElementById('package').value;
     const travelDate = document.getElementById('travel_date').value;
+    const pickupLocation = document.getElementById('pickup_location').value;
+    const pickupTime = document.getElementById('pickup_time').value;
     const message = document.getElementById('message').value;
 
     // Validate inputs
@@ -98,39 +102,67 @@ function sendMail() {
         return;
     }
 
+    if (!pickupLocation.trim()) {
+        alert('Please enter your pickup location');
+        return;
+    }
+
+    if (!pickupTime.trim()) {
+        alert('Please select your pickup time');
+        return;
+    }
+
     // Prepare parameters for EmailJS
     const params = {
-        bookingName: name,
-        bookingDate: travelDate,
-        packageRequest: packageSelected,
+        name: name,
         phone: phone,
         email: email,
+        package: packageSelected,
+        travel_date: travelDate,
+        pickup_location: pickupLocation,
+        pickup_time: pickupTime,
         message: message
     };
 
     // Show loading state
     const submitButton = document.querySelector('.submit-button');
-    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
     submitButton.disabled = true;
+    submitButton.textContent = 'Sending...';
 
     // Send email using EmailJS
     emailjs.send('service_3ft8bhe', 'template_7fip91y', params)
         .then(function(response) {
             console.log('SUCCESS!', response.status, response.text);
-            submitButton.innerHTML = '<i class="fas fa-check"></i> Sent Successfully!';
-            showBookingConfirmation(params);
-            document.getElementById('bookingForm').reset();
+            submitButton.textContent = 'Sent Successfully!';
             
+            // Show booking confirmation
+            showBookingConfirmation({
+                name,
+                phone,
+                email,
+                package: packageSelected,
+                travelDate,
+                pickupLocation,
+                pickupTime,
+                message
+            });
+            
+            // Reset form
             setTimeout(() => {
-                submitButton.innerHTML = 'Check Availability';
                 submitButton.disabled = false;
-            }, 2000);
-        })
-        .catch(function(error) {
+                submitButton.textContent = 'Check Availability';
+                document.getElementById('bookingForm').reset();
+            }, 3000);
+        }, function(error) {
             console.log('FAILED...', error);
-            submitButton.innerHTML = 'Check Availability';
-            submitButton.disabled = false;
-            alert('Failed to send booking request. Please try again or contact us directly.');
+            submitButton.textContent = 'Failed to Send';
+            alert('Failed to send message. Please try again.');
+            
+            // Reset button
+            setTimeout(() => {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Check Availability';
+            }, 3000);
         });
 }
 
@@ -177,6 +209,8 @@ form.addEventListener('submit', function(e) {
         email: form.querySelector('input[name="email"]').value,
         package: form.querySelector('select[name="package"]').value,
         travelDate: form.querySelector('input[name="travel_date"]').value,
+        pickupLocation: form.querySelector('input[name="pickup_location"]').value,
+        pickupTime: form.querySelector('input[name="pickup_time"]').value,
         message: form.querySelector('textarea[name="message"]').value
     };
     
@@ -192,6 +226,16 @@ form.addEventListener('submit', function(e) {
 
     if (!validateTravelDate(formData.travelDate)) {
         alert('Please select today\'s date or a future date');
+        return;
+    }
+
+    if (!formData.pickupLocation.trim()) {
+        alert('Please enter your pickup location');
+        return;
+    }
+
+    if (!formData.pickupTime.trim()) {
+        alert('Please select your pickup time');
         return;
     }
 
